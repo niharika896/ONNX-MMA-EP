@@ -1,0 +1,11 @@
+/build/CMakeFiles
+/build/cmake_install.cmake
+/build/CMakeCache.txt
+/build/inference_app
+/models/*.onnx
+
+/onnxruntime-linux-x64-1.31.0
+
+/venv
+
+/onnxruntime-linux-x64-1.31.0.tgz
