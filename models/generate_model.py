@@ -4,7 +4,7 @@ import torch.nn as nn
 class MiniMatrixModel(nn.Module):
     def __init__(self):
         super().__init__()
-        self.fc = nn.Linear(128,128,bias=True)
+        self.fc = nn.Linear(1024,1024,bias=True)
         
     def forward(self,x):
         return self.fc(x)
@@ -13,7 +13,7 @@ if __name__ == "__main__":
     model = MiniMatrixModel()
     model.eval()
     
-    ip = torch.randn(1,128,dtype=torch.float32)
+    ip = torch.randn(1024,1024,dtype=torch.float32)
     
     torch.onnx.export(
         model,

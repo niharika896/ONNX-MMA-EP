@@ -19,8 +19,8 @@ int main(){
         const char* model_path = "../models/llm_custom.onnx";
         Ort::Session session(env,model_path,session_options);
 
-        std::vector<float> input_values(128,1.0f);
-        std::vector<int64_t> input_shape = {1,128};
+        std::vector<float> input_values(1024*1024,1.0f);
+        std::vector<int64_t> input_shape = {1024,1024};
 
         Ort::MemoryInfo memory_info = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator,OrtMemTypeDefault);
         Ort::Value input_tensor = Ort::Value::CreateTensor<float>(memory_info,input_values.data(),input_values.size(),input_shape.data(),input_shape.size());

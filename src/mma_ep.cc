@@ -1,5 +1,5 @@
 #include "mma_ep.h"
-
+#include <chrono>
 void Kernel::Compute(OrtKernelContext *context)
 {
     Ort::KernelContext ctx(context);
@@ -32,17 +32,38 @@ void Kernel::Compute(OrtKernelContext *context)
     auto output_tensor = ctx.GetOutput(0, output_shape.data(), output_shape.size());
     float *Y = output_tensor.GetTensorMutableData<float>();
 
+    auto start_time = std::chrono::high_resolution_clock::now();
     // X=(M*K) W=(K*N)
-    for (size_t i = 0; i < M; i++)
-    {
-        for (size_t j = 0; j < N; j++)
-        {
-            float sum = 0.0f;
-            for (size_t k = 0; k < K; k++)
-            {
-                sum += X[i * K + k] * W[k * N + j];
-            }
-            Y[i * N + j] = sum + B[j];
+    // for (size_t i = 0; i < M; i++)
+    // {
+    //     for (size_t j = 0; j < N; j++)
+    //     {
+    //         float sum = 0.0f;
+    //         for (size_t k = 0; k < K; k++)
+    //         {
+    //             sum += X[i * K + k] * W[k * N + j];
+    //         }
+    //         Y[i * N + j] = sum + B[j];
+    //     }
+    // }
+    //preloading of bias
+    for (size_t i = 0; i < M; i++) {
+        for (size_t j = 0; j < N; j++) {
+            Y[i * N + j] = B[j]; 
         }
     }
+    //i-k-j matmul
+    for (size_t i = 0; i < M; i++)
+    {
+        for (size_t k = 0; k < K; k++)
+        {
+            float x_val = X[i * K + k];
+            for (size_t j = 0; j < N; j++)
+                Y[i * N + j] += x_val * W[k * N + j];
+        }
+    }
+    auto end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> elapsed = end_time - start_time;
+
+    std::cout << "naive kernel execution time: " << elapsed.count() << " ms\n";
 }
