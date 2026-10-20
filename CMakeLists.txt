@@ -19,4 +19,5 @@ include_directories(
 link_directories(${ONNXRUNTIME_DIR}/lib)
 
 add_executable(inference_app src/main.cc src/mma_ep.cc)
+target_compile_options(inference_app PRIVATE -mavx2 -mfma -O3)
 target_link_libraries(inference_app PRIVATE onnxruntime)

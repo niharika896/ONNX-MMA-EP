@@ -1,5 +1,6 @@
 #include "mma_ep.h"
 #include <chrono>
+#include <immintrin.h>
 void Kernel::Compute(OrtKernelContext *context)
 {
     Ort::KernelContext ctx(context);
@@ -46,24 +47,41 @@ void Kernel::Compute(OrtKernelContext *context)
     //         Y[i * N + j] = sum + B[j];
     //     }
     // }
-    //preloading of bias
+    // preloading of bias
     for (size_t i = 0; i < M; i++) {
         for (size_t j = 0; j < N; j++) {
-            Y[i * N + j] = B[j]; 
+            Y[i * N + j] = B[j];
         }
     }
-    //i-k-j matmul
+    // //i-k-j matmul
+    // for (size_t i = 0; i < M; i++)
+    // {
+    //     for (size_t k = 0; k < K; k++)
+    //     {
+    //         float x_val = X[i * K + k];
+    //         for (size_t j = 0; j < N; j++)
+    //             Y[i * N + j] += x_val * W[k * N + j];
+    //     }
+    // }
+
     for (size_t i = 0; i < M; i++)
     {
         for (size_t k = 0; k < K; k++)
         {
-            float x_val = X[i * K + k];
-            for (size_t j = 0; j < N; j++)
-                Y[i * N + j] += x_val * W[k * N + j];
+            __m256 x_vec = _mm256_set1_ps(X[i * K + k]);
+
+            for (size_t j = 0; j < N; j += 8)
+            {
+                __m256 w_vec = _mm256_loadu_ps(&W[k * N + j]);
+                __m256 y_vec = _mm256_loadu_ps(&Y[i * N + j]);
+
+                y_vec = _mm256_fmadd_ps(x_vec, w_vec, y_vec);
+                _mm256_storeu_ps(&Y[i * N + j], y_vec);
+            }
         }
     }
     auto end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> elapsed = end_time - start_time;
 
-    std::cout << "naive kernel execution time: " << elapsed.count() << " ms\n";
+    std::cout << "avx execution time: " << elapsed.count() << " ms\n";
 }
